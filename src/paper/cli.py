@@ -66,7 +66,11 @@ def handle_wallhaven(args):
 def handle_nasa(args):
     from .sources.nasa import fetch_urls
 
-    urls = list(islice(fetch_urls(args.query, args.center, args.people), args.count))
+    urls = list(
+        islice(
+            fetch_urls(args.query, args.center, args.people, args.min_width), args.count
+        )
+    )
     logger.info("Found %d images from NASA", len(urls))
 
     if urls:

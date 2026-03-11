@@ -6,3 +6,12 @@ MAYBE LATER:
 - Make easy install for windows
 - Auto dark/light for unix?
 - have save-wallpaper save to folders with args
+
+CODE:
+- Define an abstract base class (ABC) for image sources so all sources
+  (Reddit, Wallhaven, NASA, etc.) share a common interface and filtering contract.
+  The ABC should enforce:
+    - fetch_urls(..., min_width: int = 0) -> Iterator[str] on all sources
+    - A standard filtering hook so each source can apply min_width its own way
+      (API param for Wallhaven, metadata check for Reddit, Pillow header for NASA)
+  This prevents future sources from accidentally omitting size filtering.

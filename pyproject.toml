@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "paper"
 version = "0.3.0"
 description = "Download wallpapers from Reddit and Wallhaven"
-dependencies = ["requests", "aiohttp"]
+dependencies = ["requests", "aiohttp", "pillow"]
 
 [project.scripts]
 paper = "paper.cli:main"

@@ -1,6 +1,8 @@
+import io
 import logging
 
 import requests
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +104,28 @@ def fetch_pages(query, center=None):
         page_num += 1
 
 
-def fetch_urls(query="space", center=None, include_people=False):
+def image_width(url):
+    """Fetch just enough bytes to determine image width via Pillow."""
+    try:
+        response = requests.get(url, stream=True, timeout=15)
+        response.raise_for_status()
+        buf = io.BytesIO()
+        for chunk in response.iter_content(chunk_size=4096):
+            buf.write(chunk)
+            buf.seek(0)
+            try:
+                img = Image.open(buf)
+                img.verify()
+                return img.size[0]
+            except Exception:
+                buf.seek(0, 2)  # seek to end for next chunk
+        return 0
+    except Exception as e:
+        logger.warning("Could not read dimensions for %s: %s", url, e)
+        return 0
+
+
+def fetch_urls(query="space", center=None, include_people=False, min_width=0):
     for page in fetch_pages(query, center):
         items = page.get("collection", {}).get("items", [])
         for item in items:
@@ -115,5 +138,13 @@ def fetch_urls(query="space", center=None, include_people=False):
                 continue
 
             url = get_asset_url(nasa_id)
-            if url:
-                yield url
+            if not url:
+                continue
+
+            if min_width > 0:
+                w = image_width(url)
+                if w < min_width:
+                    logger.debug("Skipping %s: width %d < %d", url, w, min_width)
+                    continue
+
+            yield url
