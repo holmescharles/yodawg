@@ -4,14 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "yodawg"
-version = "0.2.0"
-description = "Download wallpapers and goon"
-dependencies = ["requests", "aiohttp", "pillow", "pywal16", "colorz"]
+version = "0.3.0"
+description = "Download wallpapers from Reddit and Wallhaven"
+dependencies = ["requests", "aiohttp"]
 
 [project.scripts]
 yodawg = "yodawg.cli:main"
-wal = "pywal.__main__:main"
-rice = "yodawg.rice:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

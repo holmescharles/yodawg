@@ -1,57 +1,62 @@
 import asyncio
+import sys
 from pathlib import Path
 
-from aiohttp import ClientSession, ClientTimeout
+import aiohttp
 
-from .message import message
 
 WALLPAPER_FOLDER = Path.home() / "Downloads" / "Wallpapers"
-
-
 MAX_CONCURRENT = 10
-HEADERS = {"User-Agent": "wallpaper-download"}
+MAX_RETRIES = 5
+TIMEOUT = 30
 
 
-async def get_image(session, url):
-  for attempt in range(5):
-    try:
-      async with session.get(
-        url, headers=HEADERS,
-        timeout=ClientTimeout(total=30),
-      ) as response:
-        response.raise_for_status()
-        return await response.read()
-    except Exception as e:
-      await asyncio.sleep(1 + attempt)
-      message(f"Retry {attempt + 1} for {url}: {e}")
-  message(f"Failed to download: {url}")   
+def log(*args):
+    print(*args, file=sys.stderr)
 
 
+async def fetch_image(session, url, semaphore):
+    async with semaphore:
+        for attempt in range(MAX_RETRIES):
+            try:
+                timeout = aiohttp.ClientTimeout(total=TIMEOUT)
+                async with session.get(url, timeout=timeout) as response:
+                    response.raise_for_status()
+                    return await response.read()
+            except Exception as e:
+                if attempt < MAX_RETRIES - 1:
+                    delay = 1 + attempt
+                    log(f"Retry {attempt + 1}/{MAX_RETRIES} for {url}: {e}")
+                    await asyncio.sleep(delay)
+                else:
+                    log(f"Failed after {MAX_RETRIES} attempts: {url}")
+                    return None
 
-async def download_images(urls, output):
-  folder = Path(output)
-  folder.mkdir(parents=True, exist_ok=True)
 
-  async with ClientSession() as session:
+def filename_from_url(url):
+    return url.split("/")[-1].split("?")[0]
+
+
+async def download_images(urls, output=WALLPAPER_FOLDER):
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
+
     semaphore = asyncio.Semaphore(MAX_CONCURRENT)
+    headers = {"User-Agent": "wallpaper-download"}
 
-    async def download(url):
-      async with semaphore:
-        data = await get_image(session, url)
-        if data is None:
-          return
+    async def download_one(url):
+        name = filename_from_url(url)
+        dest = output / name
 
-        file = folder / url.split("/")[-1].split("?")[0]
-        if file.exists():
-          message(f"Cached: {url}")
-          return
+        if dest.exists():
+            log(f"Cached: {name}")
+            return
 
-        try:
-          with open(file, "wb") as f:
-            f.write(data)
-            message(f"Downloaded: {url}")
-        except Exception as e:
-          message(f"Failed: {url}")
+        data = await fetch_image(session, url, semaphore)
+        if data:
+            dest.write_bytes(data)
+            log(f"Downloaded: {name}")
 
-    tasks = [asyncio.create_task(download(url)) for url in urls]
-    await asyncio.gather(*tasks)
+    async with aiohttp.ClientSession(headers=headers) as session:
+        tasks = [asyncio.create_task(download_one(url)) for url in urls]
+        await asyncio.gather(*tasks)
