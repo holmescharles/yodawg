@@ -1,14 +1,13 @@
 import argparse
 import asyncio
-import sys
+import logging
 from itertools import islice
 from pathlib import Path
 
 from .download import WALLPAPER_FOLDER, download_images
+from .logging import setup_logging
 
-
-def log(*args):
-    print(*args, file=sys.stderr)
+logger = logging.getLogger(__name__)
 
 
 def add_common_args(parser):
@@ -43,7 +42,7 @@ def handle_reddit(args):
     from .sources.reddit import fetch_urls
 
     urls = list(islice(fetch_urls(args.subreddit, args.min_width), args.count))
-    log(f"Found {len(urls)} images from r/{args.subreddit}")
+    logger.info("Found %d images from r/%s", len(urls), args.subreddit)
 
     if urls:
         asyncio.run(download_images(urls, args.output))
@@ -58,7 +57,17 @@ def handle_wallhaven(args):
             args.count,
         )
     )
-    log(f"Found {len(urls)} images from wallhaven")
+    logger.info("Found %d images from wallhaven", len(urls))
+
+    if urls:
+        asyncio.run(download_images(urls, args.output))
+
+
+def handle_nasa(args):
+    from .sources.nasa import fetch_urls
+
+    urls = list(islice(fetch_urls(args.query, args.center, args.people), args.count))
+    logger.info("Found %d images from NASA", len(urls))
 
     if urls:
         asyncio.run(download_images(urls, args.output))
@@ -66,12 +75,12 @@ def handle_wallhaven(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Download wallpapers from Reddit and Wallhaven",
+        description="Download wallpapers from Reddit, Wallhaven, and NASA",
     )
     parser.add_argument(
         "--version",
         action="version",
-        version="yodawg 0.3.0",
+        version="paper 0.3.0",
     )
 
     subparsers = parser.add_subparsers(dest="command")
@@ -106,10 +115,35 @@ def main():
     )
     add_common_args(wallhaven)
 
+    # nasa
+    nasa = subparsers.add_parser("nasa", help="search NASA image library")
+    nasa.add_argument(
+        "query",
+        nargs="?",
+        default="space",
+        help="search query (default: space)",
+    )
+    nasa.add_argument(
+        "--center",
+        default=None,
+        help="filter by NASA center (e.g. JPL, GSFC, HQ)",
+    )
+    nasa.add_argument(
+        "--people",
+        action="store_true",
+        default=False,
+        help="include photos with people (filtered out by default)",
+    )
+    add_common_args(nasa)
+
     args = parser.parse_args()
+
+    setup_logging()
 
     if not args.command:
         parser.print_help()
+        import sys
+
         sys.exit(1)
 
     if args.clear:
@@ -117,7 +151,7 @@ def main():
 
         if args.output.exists():
             shutil.rmtree(args.output)
-            log(f"Cleared {args.output}")
+            logger.info("Cleared %s", args.output)
 
     before = len(list(args.output.glob("*"))) if args.output.exists() else 0
 
@@ -125,6 +159,8 @@ def main():
         handle_reddit(args)
     elif args.command == "wallhaven":
         handle_wallhaven(args)
+    elif args.command == "nasa":
+        handle_nasa(args)
 
     after = len(list(args.output.glob("*"))) if args.output.exists() else 0
-    log(f"New images: {after - before}")
+    logger.info("New images: %d", after - before)

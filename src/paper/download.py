@@ -1,18 +1,15 @@
 import asyncio
-import sys
+import logging
 from pathlib import Path
 
 import aiohttp
 
+logger = logging.getLogger(__name__)
 
 WALLPAPER_FOLDER = Path.home() / "Downloads" / "Wallpapers"
 MAX_CONCURRENT = 10
 MAX_RETRIES = 5
 TIMEOUT = 30
-
-
-def log(*args):
-    print(*args, file=sys.stderr)
 
 
 async def fetch_image(session, url, semaphore):
@@ -26,10 +23,12 @@ async def fetch_image(session, url, semaphore):
             except Exception as e:
                 if attempt < MAX_RETRIES - 1:
                     delay = 1 + attempt
-                    log(f"Retry {attempt + 1}/{MAX_RETRIES} for {url}: {e}")
+                    logger.warning(
+                        "Retry %d/%d for %s: %s", attempt + 1, MAX_RETRIES, url, e
+                    )
                     await asyncio.sleep(delay)
                 else:
-                    log(f"Failed after {MAX_RETRIES} attempts: {url}")
+                    logger.error("Failed after %d attempts: %s", MAX_RETRIES, url)
                     return None
 
 
@@ -49,13 +48,13 @@ async def download_images(urls, output=WALLPAPER_FOLDER):
         dest = output / name
 
         if dest.exists():
-            log(f"Cached: {name}")
+            logger.debug("Cached: %s", name)
             return
 
         data = await fetch_image(session, url, semaphore)
         if data:
             dest.write_bytes(data)
-            log(f"Downloaded: {name}")
+            logger.info("Downloaded: %s", name)
 
     async with aiohttp.ClientSession(headers=headers) as session:
         tasks = [asyncio.create_task(download_one(url)) for url in urls]

@@ -1,13 +1,10 @@
-import sys
+import logging
 
 import requests
 
+logger = logging.getLogger(__name__)
 
 WALLHAVEN_URL = "https://wallhaven.cc/api/v1/search"
-
-
-def log(*args):
-    print(*args, file=sys.stderr)
 
 
 def extract_urls_from_page(page):
@@ -29,7 +26,7 @@ def fetch_pages(query, purity="100", categories="111", min_width=1920):
         if min_width > 0:
             params["atleast"] = f"{min_width}x0"
 
-        log(f"Fetching wallhaven page {page_num} (query={query!r})")
+        logger.info("Fetching wallhaven page %d (query=%r)", page_num, query)
 
         response = requests.get(WALLHAVEN_URL, params=params)
         response.raise_for_status()

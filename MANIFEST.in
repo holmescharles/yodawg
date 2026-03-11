@@ -1,2 +1,2 @@
-include src\yodawg\UpdateTerminal.ps1
+include src\paper\UpdateTerminal.ps1
 

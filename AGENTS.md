@@ -1,18 +1,18 @@
-# AGENTS.md - Coding Agent Instructions for yodawg
+# AGENTS.md - Coding Agent Instructions for paper
 
 ## Project Overview
 
-**yodawg** is a Python CLI application for downloading wallpapers from Reddit and
+**paper** is a Python CLI application for downloading wallpapers from Reddit and
 Wallhaven, then applying color schemes using pywal16. It's a personal "rice" utility.
 
 **Tech Stack:** Python 3, asyncio, aiohttp, requests, Pillow, pywal16
 
-**Entry Point:** `src/yodawg/cli.py:main()`
+**Entry Point:** `src/paper/cli.py:main()`
 
 ## Project Structure
 
 ```
-src/yodawg/
+src/paper/
 ├── cli.py           # Main CLI entry point (argparse)
 ├── rice.py          # Apply color scheme from wallpaper
 ├── download.py      # Async image downloading (aiohttp)
@@ -38,12 +38,12 @@ python -m build           # Build distribution
 ### Running
 
 ```bash
-yodawg --help
-yodawg search reddit wallpaper --count 100
-yodawg search wallhaven "nature" --count 50
-yodawg rice /path/to/image.jpg
-yodawg rice -l            # light mode
-yodawg save
+paper --help
+paper search reddit wallpaper --count 100
+paper search wallhaven "nature" --count 50
+paper rice /path/to/image.jpg
+paper rice -l            # light mode
+paper save
 ```
 
 ### Linting
@@ -52,7 +52,7 @@ No linter is currently configured. If adding linting, use ruff:
 
 ```bash
 ruff check src/                      # Lint all
-ruff check src/yodawg/cli.py         # Lint single file
+ruff check src/paper/cli.py         # Lint single file
 ruff check --fix src/                # Auto-fix
 ruff format src/                     # Format
 ```

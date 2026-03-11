@@ -3,13 +3,13 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "yodawg"
+name = "paper"
 version = "0.3.0"
 description = "Download wallpapers from Reddit and Wallhaven"
 dependencies = ["requests", "aiohttp"]
 
 [project.scripts]
-yodawg = "yodawg.cli:main"
+paper = "paper.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

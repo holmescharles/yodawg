@@ -1,15 +1,12 @@
-import sys
+import logging
 
 import requests
 
+logger = logging.getLogger(__name__)
 
 REDDIT_URL = "https://www.reddit.com/r/{subreddit}/.json"
 HEADERS = {"User-Agent": "wallpaper-download"}
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png")
-
-
-def log(*args):
-    print(*args, file=sys.stderr)
 
 
 def extract_gallery_urls(post, min_width=0):
@@ -67,7 +64,7 @@ def fetch_pages(subreddit):
             params["after"] = after
 
         url = REDDIT_URL.format(subreddit=subreddit)
-        log(f"Fetching {url} (after={after})")
+        logger.info("Fetching %s (after=%s)", url, after)
 
         response = requests.get(url, headers=HEADERS, params=params)
         response.raise_for_status()
