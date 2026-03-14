@@ -1,12 +1,17 @@
 import asyncio
 import logging
+import os
 from pathlib import Path
 
 import aiohttp
 
 logger = logging.getLogger(__name__)
 
-WALLPAPER_FOLDER = Path.home() / "Downloads" / "Wallpapers"
+WALLPAPER_FOLDER = (
+    Path(os.environ["WALLPAPER_FOLDER"])
+    if "WALLPAPER_FOLDER" in os.environ
+    else Path.home() / "Downloads" / "Wallpapers"
+)
 MAX_CONCURRENT = 10
 MAX_RETRIES = 5
 TIMEOUT = 30
