@@ -108,11 +108,13 @@ def main():
         help="search query",
     )
     wallhaven.add_argument(
+        "-p",
         "--purity",
         default="100",
         help="purity filter: 1=sfw, 0=off per digit (sfw/sketchy/nsfw, default: 100)",
     )
     wallhaven.add_argument(
+        "-c",
         "--categories",
         default="111",
         help="category filter: 1=on, 0=off per digit (general/anime/people, default: 111)",
